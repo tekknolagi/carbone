@@ -24,6 +24,7 @@ DEBUG_ENGINE_OPTS = -DVM_DEBUG -DVM_PROFILING -Dengine=engine_debug
 build: $(OBJS)
 
 $(VMGEN_TARGETS): rb.vmg
+	mkdir gen || true
 	cd gen && vmgen ../rb.vmg
 	touch $(VMGEN_TARGETS)   ## ??? why does vmgen not touch ???
 
