@@ -1,0 +1,85 @@
+
+
+(class Fixnum
+       (+ ((other))
+	  (if (((kind_of? T_FIXNUM other)
+		(let ((long tmp (+ (value2long rcv)
+				   (value2long other))))
+		  (if (((in_imm_range tmp)
+			(return (long2value tmp))))
+		      (return (handle fixnum_overflow))))))
+	      (return (handle fixnum_coerce))))
+
+       (- ((other))
+	  (if (((kind_of? T_FIXNUM other)
+		(let ((long tmp (- (value2long rcv)
+				   (value2long other))))
+		  (if (((in_imm_range tmp)
+			(return (long2value tmp))))
+		      (return (handle fixnum_overflow))))))
+	      (return (handle fixnum_coerce))))
+
+       (* ((other))
+	  (if (((kind_of? T_FIXNUM other)
+		(let ((long a (value2long rcv))
+		      (long b (value2long other))
+		      (long prod (* a b)))
+		  (if (((&& (in_imm_range prod)
+			    (eql (/ prod a) b))
+			(return (long2value prod))))
+		      (return (handle fixnum_overflow))))))
+	      (return (handle fixnum_coerce))))
+
+       (/ ((other))
+	  (if (((kind_of? T_FIXNUM other)
+		(let ((long tmp (/ (value2long rcv)
+				   (value2long other))))
+		  (return (long2value tmp)))))
+	      (return (handle fixnum_coerce))))
+
+       (< ((other))
+	  (if (((kind_of? T_FIXNUM other)
+		(let ((long a (value2long rcv))
+		      (long b (value2long other)))
+		  (if (((< a b)
+			(return (true))))
+		      (return (false))))))
+	      (return (handle fixnum_coerce))))
+
+       (> ((other))
+	  (if (((kind_of? T_FIXNUM other)
+		(let ((long a (value2long rcv))
+		      (long b (value2long other)))
+		  (if (((> a b)
+			(return (true))))
+		      (return (false))))))
+	      (return (handle fixnum_coerce))))
+
+       (<=> ((other))
+	  (if (((kind_of? T_FIXNUM other)
+		(let ((long a (value2long rcv))
+		      (long b (value2long other)))
+		  (if (((< a b) (return -1))
+		       ((< b a) (return  1)))
+		      (return 0)))))
+	      (return (handle fixnum_coerce))))
+
+
+       (@+ (())
+	   (return rcv))
+
+       (@- (())
+	   (let ((long a (value2long rcv)))
+	     (return (long2value (- a)))))
+
+       ([] ((other))
+	  (if (((kind_of? T_FIXNUM other)
+		(let ((long a (value2long rcv))
+		      (long mask (<< 1 (value2long other))))
+		  (if (((& a mask) (return 1)))
+		      (return 0)))))))
+	   
+
+)
+
+

@@ -1,0 +1,132 @@
+better build system that
+  * handles dependencies
+  * has a inheriting hierarchy of configurations
+    (each level can add arbitrary configuration values; after
+     including a specific number of levels the sum of configuration
+     values is no more abstract but includes enough information to
+     actually build) 
+  * has a hierarchy of subdirectories corresponding to the
+    configurations
+  * keeps all produced files that depend on configuration data in
+    the corresponding subdirectory (and only those).
+    Under corresponding subdirectory one may understand the least
+    specific configuration level that still influences.
+  who has such a build system?
+
+mkdep
+
+update pictures in doc/ to actual state
+
+do not cache self in heap frame (except the methods heap frame; wher
+it's neccessary)
+
+make (ret ...) working; (for returns from the middle of a method)
+
+make Class#new a vmbuiltin
+
+mark all globals with "[FIXME] global var" so i can refind them.
+
+rename instruction "invoke" to "call"
+
+mixins
+
+super
+
+isn't there some state necessary to know where to restart looking up
+methods when super is called????
+
+super with original args (even if assigned to; see constructs.rb)
+
+
+proc passing on separate stack;  current fp of proc-pushing context is
+also pushed to the  proc stack, so the caller can do  `*fp' to get the
+old stack and compare it with the top of the proc stack.
+
+optional args; generator.c
+def meth(a,b=1,c=2)  ...  end
+
+
+there should be a concept of anonymous methods; now, one is used to
+compile the class definition in the classes context; but later eval
+may use the same thing
+
+
+there should be a concept of annotations to code; one may use this to
+find the method of a certain piece of code (maybe that one that is
+currently executing) and then one may store there, where a super()
+should continue to search for the next method.
+
+IOW It would be nice to annotate code with arbitrary data.
+
+
+the swaps in compiling sends is often not necessary if the evaluation
+of the rcv has no side-effects (then rcv can savely be evaluated after
+eval'ing all args) 
+
+gen(rcv); gen(par1); gen_swap(); gen(par2); gen_swap(); 
+                 ==>
+gen(par1); gen(par2); gen(rcv);
+
+
+allow multiple parameters in (scond ...); compiler; parser
+
+
+svars - pick  - stab - certain superinstructions  are invalid; Exactly
+those SI are  invalid that do a pick or stab  at a svar stack-position
+that  is  shadowed  by  C  variables; This  is  possible  during  long
+superinstructions, that  begin with  a sequence of  lit-dup-dup-... to
+reserve space on the stack (on method headers).
+
+(1) The compiler could produce different code, but then he would need
+    feedback whether a pick or stab is acessing such a
+    lit-allocated-stack position.
+
+(2) Another (much easier) way would be to filter the list of SIs
+    before compiling the VM.
+
+The  first solution  seems to  be the  optimal, because  the generator
+could decide whether a pick or  stab really accesses a not yet flushed
+svar  or is  accessing something  different. (probably  5%) (currently
+there is a BB_BOUNDARY  in comp/generator.c#gen_code_method to begin a
+new basic block, so the stack variables are flushed)
+
+
+continuations
+
+exceptions
+
+  * make the complete stack dumpable
+    maybe have to insert extra tags in stack
+    complete dump, or till a certain mark
+
+
+
+############### optimizations
+
+Build a framework for code that is optimized in relying on some
+generally true assumptions.
+For example Ruby constants; Their values should not be changed, but
+can be changed. The compiler may optimize, _if_ the dependency is kept
+somewhere and an event for recompilation is generated when the constant
+is actually changed.
+
+Then, one can produce spezialized code in some cases.
+
+
+To implement full ivars semantic in classes that are re-opened, such
+a thing is also necessary, because ivar acessor code is already
+'optimized' this way: the offset for a ivar is compiled into the code.
+
+
+############### maybe good
+
+ * how to hide the differences between direct and indirect heap
+   organization in a bunch of C macros.
+   The later may be interesting for real time garbage collection.
+
+
+
+############### probably later
+
+  * listen to the types of receivers, parameters and results and
+    compile specialized methods...

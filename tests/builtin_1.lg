@@ -1,0 +1,11 @@
+;   -*-mode: Lisp; -*-
+
+(snippets
+
+ ((body
+   ((send
+     (lit 100)
+     +
+     ((lit 80)))))
+  180)
+)

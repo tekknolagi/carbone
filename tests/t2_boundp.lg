@@ -1,0 +1,28 @@
+
+#   -*- mode: Lisp; -*-
+
+(snippets
+
+ ((boundp (const (nil) Fixnum) (lit *))       (true))
+ ((boundp (const (nil) Fixnum) (lit +))       (true))
+ ((boundp (const (nil) Fixnum) (lit -))       (true))
+ ((boundp (const (nil) Fixnum) (lit /))       (true))
+ ((boundp (const (nil) Fixnum) (lit aaahh))   (false))
+ ((boundp (const (nil) Fixnum) (lit uhuhu))   (false))
+
+ ((body
+   ((send (const (nil) Fixnum)
+	  define_method
+	  ((lit (uhuhu
+		 (nil)
+		 (lit 1)))))
+    (lit (nil))))
+  (nil))
+
+ ((boundp (const (nil) Fixnum) (lit *))       (true))
+ ((boundp (const (nil) Fixnum) (lit +))       (true))
+ ((boundp (const (nil) Fixnum) (lit -))       (true))
+ ((boundp (const (nil) Fixnum) (lit /))       (true))
+ ((boundp (const (nil) Fixnum) (lit aaahh))   (false))
+ ((boundp (const (nil) Fixnum) (lit uhuhu))   (true))
+)

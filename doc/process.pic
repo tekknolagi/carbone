@@ -1,0 +1,45 @@
+.PS left
+boxwid = 1.4;
+boxht = 0.4;
+
+box "Ruby source";
+
+  arrow " .rb" above;
+
+box "Ruby parser";
+move to last box.s;
+down;
+    arrow 2/3 " Ruby\fISche\fPma" ljust " M\'etaRuby" ljust; 
+
+R2MR:
+  box "Ruby to MicroRuby" "compiler";
+arrow;
+  box "LGram Dumper";
+
+LSP: arrow 1;
+
+ { " LGram" ljust " (m (lit 1) " ljust "      +" ljust "      ((lit 1)))" ljust \
+  at 5/10<LSP.s,LSP.n> };
+
+VMP: box "LGram Parser";
+
+  arrow ;
+
+#  box dashed 1/7 "pre-eval";
+
+GEN: box "Instruction" "Generator";
+  arrow 12/10 " lit 1" ljust " dup" ljust " lit 1" ljust " lit :+" ljust \
+              " send" ljust;
+VM: box "VM";
+
+FB: spline -> from VM.w left 5/10 then up 12/10 then to GEN.w;
+
+box invis "re-" ljust "compilation" ljust "demand" ljust with .e at FB.c + (3/10,-1/10);
+
+box wid boxwid*2 ht VMP.n.y-VM.s.y+3/10 with .n at VMP.n;
+
+ { "\fB Carbone VM \fR"  above rjust at last box.se};
+
+
+.PE
+

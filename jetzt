@@ -1,0 +1,42 @@
+
+
+wie gehts weiter???
+
+
+parameter;
+
+parameter werden auf dem stack übergeben; für den fall das procs
+verschachtelt auftreten können auf jeder ebene neue
+dazukommen. (methoden und jeder proc können parameter haben)
+
+gibt es in einem context parameter, so verursacht die erste erzeugte
+closure alle parameter in den heap zu verschieben. (erste ist nicht
+örtlich zu verstehen; jede zu erzeugende closure prüft, ob die
+parameter der methode immer noch nur auf den stack liegen; es muß also
+einen Merker im activation frame der methode geben)
+
+bei "def a(x,y); proc{}; end"
+	wird also vor der proc creation x und y in den heap ge-moved
+
+bei "def a(x,y); proc{|u| proc {} }; end"
+	wird für die erste proc x und y; für die zweite u in den heap
+	gesetzt. 
+
+
+proc{|a| proc{|b| proc{|c|  proc{[a,b,c]} }   }   }
+proc{|a| proc{|b| proc{|c|  proc{[a,b,c]} }   }   }[]
+proc{|a| proc{|b| proc{|c|  proc{[a,b,c]} }   }[] }
+proc{|a| proc{|b| proc{|c|  proc{[a,b,c]} }[] }   }
+
+
+
+
+
+
+
+yield
+
+
+explore instruction cf
+
+

@@ -1,0 +1,257 @@
+
+			 The Carbone Ruby VM
+		      ==========================
+
+
+Carbone  is a  vmgen based,  efficient virtual  machine for  Ruby.  It
+targets compatibility, performance and portability.
+
+Anton  Ertl's vmgen  is  originally  the build  tool  for Gforth,  the
+fastest portable Forth implementation. It produces VMs that use direct
+threaded  code  and  support   various  optimizations  that  make  the
+execution of a virtual machine less virtual (i.e. faster).
+
+There is lots  of flexibility gained in the decision  to use vmgen; to
+name the most important: VM instructions can be coded in C
+
+What's already working in the Carbone VM is:
+  * sending
+  * generically calling C functions
+  * parts of the Ruby object system
+  * defining classes
+  * defining methods
+  * defining procs
+  * calling methods, procs
+  * instance variables for classes
+  * Fixnum
+
+
+This  is a  developers-only prerelease  of  Carbone. BTW  there is  no
+compiler  yet.    Neither  forward  nor   backwards  compatibility  is
+guaranteed! You have been warned.
+
+Carbone is released under the GPL.  Parts will be under LPGL.  I think
+about adopting the Guile Copyright.
+
+The preferred way for support and especially the exchange of ideas and
+patches is
+            carbone-dev@mail.freesoftware.fsf.org
+
+and more occasionally than regularly irc (#ruby-lang).
+
+
+Carbone's author till now is Markus Liedl <markus.lado@gmx.de>
+
+
+Missing:
+--------
+
+(in about the order I will continue)
+
+	yield
+	mixins
+	mixins ivars (already prepared)
+	super
+	super with arguments
+	full constants support
+	singleton classes
+	optional arguments
+	rest array arguments
+	parallel assignment
+	continuations
+	threads
+ 	full eval support (esp. introduction of new variables)
+	builtin classes like String, ...
+	special variables ($' $: ...)
+
+(and somewhere in  between this list I will start  to build a frontend
+using the RubyInRuby Parser --- if I find no better parser)
+  
+
+Dependencies
+------------
+
+  Gforth snapshot from May 2001,
+  which includes vmgen
+                    http://www.complang.tuwien.ac.at/anton/vmgen/
+                    also see the paper there.
+
+  Bison, Flex
+
+  Ruby, MétaRuby    for preprocessing Fixnum-Builtins to C/vmgen code
+                    www.ruby-lang.org,
+                    cvs.ruby-lang.org:/src/lib/metaruby
+                    (also changes neccessary in configuration.rb:
+                      $options[:metaruby] = "/..../src/lib/metaruby")
+
+  GCC               preferably version 3; but 2.x works also fine
+		    (you may have to adjust configuration.rb:
+                      $options[:has_gcc_3_0] = true; ...)
+
+  Boehm GC          optional; for example Debians libgc6 and libgc6-dev
+
+  Till now it's running it on Linux.
+
+
+Build Process
+-------------
+
+  get the sources:
+
+  cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/carbone \
+    login
+ 
+  cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/carbone \
+    co carbone
+
+  $EDITOR carbone/configuration.rb
+  cd carbone
+  make gen
+
+  ./gen -h
+  ./gen -c tests/fib.lg
+  make tests
+  make all-tests
+
+and to build an optimized VM:
+  
+  change to `DEBUG = false' in carbone/configuration.rb
+
+  make opt t=tests/fib.lg
+
+this will profile the VM using the given code; measure the unoptimized
+VM  and then  re-compile it  with appropriate  super-instructions. The
+resulting  VM is  named `$(t).vm',  so in  the example  this  would be
+`tests/fib.lg.vm'.  You can see  that by running `tests/fib.lg.vm -V',
+which will tell you something like:
+
+/---------------------------------------------------
+| Carbone v0.1 -- A efficient Ruby VM
+|   # of superinstructions : 39
+|   class-method cache     : hash
+|  
+| initialized
+\---------------------------------------------------
+
+Note  that the number  of super-instructions  is not  0.  The  list of
+super-instructions  rests in  vm/rb-super.vmg; and  one can  see which
+super-instructions got applied to some code by using the -c flag.
+
+Global  configuration data  is  kept in  configuration.rb.  The  files
+configuration.h  and Makefile.conf are  produced when  executing `ruby
+configure.rb' (but  this is done automatically  if configuration.rb is
+changed; and in this case old *.o files are also swept away).
+
+
+Input Language
+--------------
+
+The input language  - Carbone's first native language  - is Lisp-like,
+corresponding to a subset of LGram level 1.
+
+It is parsed and precompiled Ruby code.
+
+see doc/input_language.txt
+
+
+
+Usage
+-----
+
+./gen [options] [ file | -e string ]
+Options:
+-h      Print this message and exit
+-c      dump compiled code before execution
+-t      trace execution
+-e      use commandline for input
+-p      profile VM code sequences >stderr
+-i      inspect compilation of vm builtins
+-V      version info plus details about VM internals
+-S      don't use superinstructions
+-s      print statistics
+
+
+for example:
+
+[.../carbone] ./gen -sScte "(send (lit 1) + ((lit 2)))"
+-------------------------------------------------------------------
+initialized
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+send (lit 1) + ((lit 2))
+-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+0x849d0d0: lit 0x1  
+0x849d0d8: lit 0x2  
+0x849d0e0: swap
+0x849d0e4: lit 0x7c  
+0x849d0ec: lit 0x1  
+0x849d0f4: send
+0x849d0f8: nip
+0x849d0fc: end
+-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+entering engine(0x849d0d0,0x863887c,(nil))
+0x849d0d0: lit     , fp=(nil), sp=0x863887c i=0x1   -- 
+0x849d0d8: lit     , fp=(nil), sp=0x8638878 i=0x2   -- 
+0x849d0e0: swap    , fp=(nil), sp=0x8638874 i1=0x1   i2=0x2   -- 
+0x849d0e4: lit     , fp=(nil), sp=0x8638874 i=0x7c   -- 
+0x849d0ec: lit     , fp=(nil), sp=0x8638870 i=0x1   -- 
+0x849d0f4: send    , fp=(nil), sp=0x863886c rcv=0x1   sel=+<0x7c>
+               inpar=0x1   --  retip=0xbffff97c   oldfp=0x400aeb78  
+0x849d0f4: fixnumPlus, fp=(nil), sp=0x8638868 other=0x2   rcv=0x1
+               inpar=0x1   retip=0xbffff97c   oldfp=0x400aeb78   --  ires=0x3  
+0x849d0f8: nip     , fp=(nil), sp=0x8638874 i1=0x2   i=0x3   -- 
+0x849d0fc: end     , fp=(nil), sp=0x8638878 i=0x3  
+   ==> 0x3 (3)
+.uncached method searches: 1
+-------------------------------------------------------------------
+
+`send' is the interesting instruction, that transfers control to the
+implementation of Fixnum#+, which is a instruction named `fixnumPlus' in
+the current implementation. The `lit' instructs before it exist "only"
+to push receiver, selector, parameters and number of parameters in a
+well defined order, so that send and the method implementation can
+refind them.
+
+`nip'   is  necessary   to  throw   away  the   parameter   (which  is
+responsability of the caller); The stack effect of `nip' is
+
+  `( i1 i -- i )'       (as seen in vm/rb-inst.vmg)
+
+which means:
+
+left side of `--'    pop stack-top into variable i
+                     pop next stack-top into variable i1
+
+right side of `--'   push i as new stack-top
+
+The net  effect is to pull out  the stack element under  the top stack
+element (which  is the result of  the called method,  Fixnum#+ in this
+case).  The instruction generator puts in one `nip' for each parameter
+(as seen in comp/generator.c#374)
+
+The GForth manual is a good read.
+
+
+Speed
+-----
+
+I see Carbone running about seven times faster than matz' Ruby machine
+(on PentiumIII hardware). This  happens especially with code that does
+not use  lots of  builtins (like Fixnum#+,  ...); They are  compiled C
+code like in matz' Ruby machine). But with code that recurses or calls
+other methods that are implemented  in Ruby (better said: Carbon input
+language).  From obvious reasons  the mentioned improvment factor will
+go down to zero when spending  all the time in builtins; (long running
+builtins, not Fixnum#+;  but this effect begins with  it). One may say
+snippets that do  no work are producing larger  speed improvments; but
+this is  also the kind  of code one  calls object oriented;  i.e. many
+levels of indirection, abstraction .....
+
+Some of the files in  carbone/tests/ may be interesting. (I hope there
+are no more  logical errors in this  code, so I will no  more report a
+speed improvment factor of twenty,  when this only happens because the
+corresponding Ruby code was different and doing the double work ... )
+
+The produced assembler code for each VM instruction:
+
+  cd carbone/vm; make engine.gdis; less engine.gdis
+

@@ -1,0 +1,5 @@
+(1 2 (if (or (atom true) (atom false)) (* (+ 12 23 34) (+ 123 234 34) (+ 12 23 ))
+(if (or (atom true) (atom false)) (* (+ 12 23 34) (+ 123 234 34) (+ 12 23 ))
+(if (or (atom true) (atom false)) (* (+ 12 23 34) (+ 123 234 34) (+ 12 23 ))
+(if (or (atom true) (atom false)) (* (+ 12 23 34) (+ 123 234 34) (+ 12 23 ))
+)))))

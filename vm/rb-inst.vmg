@@ -1,0 +1,447 @@
+\   definition of VM primitives
+\
+\   Copyright (C) 2002 Markus Liedl, markus.lado@gmx.de
+\
+\   This file is part of Carbone.
+\ 
+\   This is free software; you can redistribute it and/or
+\   modify it under the terms of the GNU General Public License
+\   as published by the Free Software Foundation; either version 2
+\   of the License, or (at your option) any later version.
+\ 
+\   This program is distributed in the hope that it will be useful,
+\   but WITHOUT ANY WARRANTY; without even the implied warranty of
+\   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+\   GNU General Public License for more details.
+\ 
+\   You should have received a copy of the GNU General Public License
+\   along with this program; if not, write to the Free Software
+\   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA.
+\ 
+\
+
+
+\ -----------------------------------------------
+\                               stack definitions
+\ -----------------------------------------------
+\E stack data-stack sp Cell
+\ \E stack proc-stack procsp Cell
+
+
+\ -----------------------------------------------
+\                         type prefix definitions
+\ -----------------------------------------------
+\E s" Cell"              single data-stack type-prefix  i
+\E s" Inst*"             single data-stack type-prefix  target
+\E s" void*"             single data-stack type-prefix  cfunc
+\E s" Sym"               single data-stack type-prefix  sel
+\E s" VALUE"             single data-stack type-prefix  rcv
+\E s" VALUE"             single data-stack type-prefix  proc
+\E s" Class*"            single data-stack type-prefix  class
+\E s" Method*"           single data-stack type-prefix  meth
+\E s" void*"             single data-stack type-prefix  oldfp
+\E s" Inst*"             single data-stack type-prefix  retip
+\E s" Cell*"             single data-stack type-prefix  ptr
+\E s" VALUE"             single data-stack type-prefix  other
+
+
+\ -----------------------------------------------
+\                        stack prefix definitions
+\ -----------------------------------------------
+\E inst-stream stack-prefix #
+
+
+\ -----------------------------------------------
+\ -----------------------------------------------
+nop ( -- )
+
+\ -----------------------------------------------
+\ stack operations
+\ -----------------------------------------------
+dup ( i -- i i )
+
+drop ( i -- )
+
+nip ( i_drop i -- i )
+
+swap ( i1 i2 -- i2 i1 )
+
+
+\ -----------------------------------------------
+\ literal
+\ -----------------------------------------------
+lit ( #i -- i )
+
+
+\ -----------------------------------------------
+\ equality
+\ -----------------------------------------------
+eql ( ia ib -- i )
+  i = ia == ib ? rb_true : rb_false;
+
+neql ( ia ib -- i )
+  i = ia == ib ? rb_false : rb_true;
+
+
+\ -----------------------------------------------
+\ jump, conditional branches
+\ -----------------------------------------------
+jmp ( #target -- )
+  SET_IP(target);
+
+braf ( i #target -- )
+  if (i == rb_nil || i == rb_false) SET_IP(target);
+
+brat ( i #target -- )
+  if (i != rb_nil && i != rb_false) SET_IP(target);
+
+
+\ -----------------------------------------------
+\ calling C functions
+\ -----------------------------------------------
+cfunc0 ( #cfunc -- i )
+  Cell (*f)(void) = cfunc;
+  i = (f)();
+
+cfunc1 ( ipar #cfunc -- i )
+  Cell (*f)(Cell) = cfunc;
+  i = (f)(ipar);
+
+cfunc2 ( ipar1 ipar2 #cfunc -- i )
+  Cell (*f)(Cell,Cell) = cfunc;
+  i = (f)(ipar1, ipar2);
+
+cfunc3 ( ipar1 ipar2 inpar3 #cfunc -- i )
+  Cell (*f)(Cell,Cell,Cell) = cfunc;
+  i = (f)(ipar1, ipar2, inpar3);
+
+cfuncv0 ( #cfunc -- )
+  void (*f)(void) = cfunc;
+  (f)();
+
+cfuncv1 ( ipar #cfunc -- )
+  void (*f)(Cell) = cfunc;
+  (f)(ipar);
+
+cfuncv2 ( ipar1 ipar2 #cfunc -- )
+  void (*f)(Cell,Cell) = cfunc;
+  (f)(ipar1, ipar2);
+
+
+
+\ -----------------------------------------------
+\ end
+\ -----------------------------------------------
+end ( i -- )
+return(i);
+
+
+
+\ -----------------------------------------------
+\ adressed stack access
+\ -----------------------------------------------
+pick ( #ipos -- i )
+  i = *(Cell*)(fp+ipos);
+
+stab ( #ipos i -- i )
+  *(Cell*)(fp+ipos) = i;
+
+
+\ -----------------------------------------------
+\ offsetted memory access
+\ -----------------------------------------------
+apick ( ptr #ipos -- i )
+  i = *(Cell*)(  ((char*)ptr)+ipos  );
+
+astab ( i ptr #ipos -- i )
+  *(Cell*)(  ((char*)ptr)+ipos  ) = i;
+
+
+
+\ ------------------------------------------------------
+\ stack snapshot during execution of a method
+\ ------------------------------------------------------
+\
+\ /------------------------------ stack bottom (higher address) -------------\
+\ |
+\ |                                                   for "1.meth(3,2)"
+\ |
+\ |    +-> old-old-fp
+\ |    |   [senders intermediate results]
+\ |    |   parameter1  (VALUE)                        fixnum(3)
+\ |    |   parameter2  (VALUE)                        fixnum(2)
+\ |    |   receiver  (VALUE)                          fixnum(1)
+\ |    |   method                                     Fixnum#meth
+\ |    |   number of parameters                       2
+\ |    |   return instruction pointer (to vm code)    0x8fff0..
+\ |    +-- old-fp                    <--  fp
+\ |        [methods svars]
+\ |        [intermediate results]    <--  sp
+\ |
+\ \------------------------------ stack top (lower address) -----------------/
+\
+\  changes in the stack layout have to be synced in with vm/stack-layout.c
+\
+\
+\ general note:
+\    All `<id>' in `retry_send<id>' in this file are translated to a
+\    number. This is done by a preprocessor (see vm/Makefile#make_ascending_labels).
+\    It is necessary because with superinstructions the C code for "send" can appear
+\    multiple times in the produced code and gcc's local lables only apply to macros.
+\ '
+\
+\ -----------------------------------------------
+\ send { classOf lookup invoke } / return
+\ -----------------------------------------------
+send ( rcv sel inpar -- rcv meth inpar retip oldfp )
+  Class       *class;
+  DEBUG_MODE( retip = (Inst*)(oldfp = (void*)0) ); // superfl.
+  m_class_of(rcv,class);
+  lookup_method(class, sel, meth);
+  retry_send<new-id>:
+  if (meth != 0) {
+    if (meth->cache_code != 0) {
+      // ------------------------ method implementation is Ruby code
+      oldfp = fp;
+      fp = (char*)sp;
+      retip   = IP;
+      SET_IP(meth->cache_code);
+    }
+    else if (meth->cache_insn != 0) {
+      // ------------------------ method implementation is a VM primitive
+      //                          (see carbone/builtins/*.decl)
+      /* I like TAIL, but I dont like the target it wants to jump to
+       * (Anton, what do you think of: `FLUSH'?)
+       */
+      #undef NEXT_P1
+      #undef NEXT_P2
+      #define NEXT_P1 ;
+      #define NEXT_P2 ({goto *(meth->cache_insn);})
+      // --------
+           TAIL;    /* uses NEXT_P1 and NEXT_P2 (see vm/gen/rb-vm.i)  */
+      // --------
+      #undef NEXT_P1
+      #undef NEXT_P2
+      #include "vm/engine_NEXT_P2.h"
+      // note: retip and oldfp are not set to serious values because there
+      //       is no stack frame and there is no return.
+      //       (they need not be flushed here; but this is a minor optimization)
+    }
+    else if (meth->code != 0) {
+      meth->cache_code = meth->code->code;
+      meth->cache_insn = meth->code->insn;
+      goto retry_send<id>;
+    }
+    else {
+      /*-- method is scheduled for compilation --*/
+      // goto retry_send<id>;
+      meth_report_dyn_recomp_unsupp(rcv, sel);
+    }
+  }
+  else { // meth == 0
+    // see if object has :missing and call it; or
+    meth_report_does_not_exist(rcv,sel);
+  }
+
+
+\ the same again, but more fine grained
+\
+\ sequence for a send is:
+\   [push parameters]  [push rcv]  dup  classOf
+\   [push sel]  sym2idx  lookup
+\   [push num params]  invoke
+\
+\ note: there is no test whether the method doesnt exist
+
+classOf ( rcv -- class )
+  m_class_of(rcv,class);
+
+lookup ( class sel -- meth )
+  // doesnt fallback to :missing and reports no error
+  lookup_method(class, sel, meth);
+
+invoke ( rcv i_callable inpar -- rcv i_ca inpar retip oldfp )
+  Callable *ca;
+  i_ca       = (VALUE)  i_callable;
+  ca         = (Callable*) i_callable;
+  DEBUG_MODE( retip = (Inst*)(oldfp = (void*)0) ); // superfl.
+  retry_send<new-id>:
+  if (ca->cache_code != 0) {
+    // ------------------------ method implementation is Ruby code
+    oldfp = fp;
+    fp = (char*)sp;
+    retip   = IP;
+    SET_IP(ca->cache_code);
+  } else if (ca->cache_insn != 0) {
+    // ------------------------ method implementation is a VM primitive
+    #undef NEXT_P1
+    #undef NEXT_P2
+    #define NEXT_P1 ;
+    #define NEXT_P2 ({goto *(ca->cache_insn);})
+    // --------
+    TAIL;  /* uses NEXT_P1 and NEXT_P2 (see vm/gen/rb-vm.i)  */
+    // --------
+    #undef NEXT_P1
+    #undef NEXT_P2
+    #include "vm/engine_NEXT_P2.h"
+  } else if (ca->code != 0) {
+    ca->cache_code = ca->code->code;  // caching; one indirection less
+    ca->cache_insn = ca->code->insn;
+    goto retry_send<id>;
+  } else {
+    /*-- method is scheduled for compilation --*/
+    // goto retry_send<id>;
+    meth_report_dyn_recomp_unsupp(rcv, intern("proc-or-unknown"));
+  }
+/*
+   note:
+   When invoke is executed, a rcv (the future self) _and_ the method are
+   laying on the stack: carbone Method objects are _not_ Ruby Method 
+   objects! (see fond/method.c)
+*/
+
+
+ret ( i_rcv i_ca i_inpar retip oldfp iret_val -- iret_val )
+  SET_IP(retip);
+  fp = oldfp;
+
+sym2idx ( i_sym -- sel )
+  if (!is_symbol(i_sym)) {
+    // [FIXME] should be able to convert from string
+    fprintf(stderr, "non-symbol given to sym2idx"); abort();
+  }
+  sel = sym2idx(i_sym);
+
+
+\ ------------------------------------------------------
+\ check number of parameters
+\ ------------------------------------------------------
+
+\ check for the number of parameters
+chkpar ( #i_num_par -- )
+  int n = *(Cell*)(fp + stk_num_param_offs());
+  if (i_num_par != n) meth_report_wrong_num_parameters2(ip, sp, fp);
+  
+
+\ check for minimal number of parameters
+chkparMin ( #i_min_num_par -- )
+  int n = *(Cell*)(fp + stk_num_param_offs());
+  if (i_min_num_par > n) meth_report_wrong_num_parameters2(ip, sp, fp);
+  
+
+\ check for maximal number of parameters
+chkparMax ( #i_max_num_par -- )
+  int n = *(Cell*)(fp + stk_num_param_offs());
+  if (i_max_num_par < n) meth_report_wrong_num_parameters2(ip, sp, fp);
+
+\ to check for min and max, use min and max in sequence
+
+
+
+\ ------------------------------------------------------
+\ svars
+\ ------------------------------------------------------
+\ Currently the only legal way to use svars is to push
+\ a svar frame directly at the beginning of a method.
+\ This way they can be addressed fp relative.
+\ ------------------------------------------------------
+
+\ reserve Cells on stack for svars
+\ name is general because it does not depend on svars
+allot ( i_cells -- )
+  sp -= i_cells;
+
+\ drop n cells under the top (e.g. keep result);
+\ used for dropping svars
+nipn ( i_ret i_cells -- i_ret___ )
+  sp += i_cells;
+  i_ret___ = i_ret;
+
+
+\ ------------------------------------------------------
+\ lvars
+\ ------------------------------------------------------
+\ A pointer to a Frame is also only allowed at the head
+\ of a method or block's code.
+\ ------------------------------------------------------
+
+malloc ( i_cells -- i_heap_frame )
+  i_heap_frame = (Cell)allocate(i_cells*sizeof(Cell));
+
+
+\ ------------------------------------------------------
+\ dup parameters
+\   - use params passed to a method for another call
+\
+\ rcv (spTOS) is pushed again on spTOS
+\ ------------------------------------------------------
+dupParams ( rcv -- rcv_ )
+  long i = 0;
+  Cell numParams = stk_num_param(fp),
+       *src = (Cell*)(fp + stk_param_offs(numParams)),
+       val, *osp;
+  #if defined(DBG_SHOW_PARAM_DUP) && defined(VM_DEBUG)
+    if (vm_debug) printf("\n");
+  #endif
+  while (i < numParams){
+    i++;
+    osp = sp;
+    val = *sp-- = *--src;
+    #if defined(DBG_SHOW_PARAM_DUP) && defined(VM_DEBUG)
+      if (vm_debug) printf("dupParameter(*%p = *%p = %p)\n",
+			   osp, src, (void*)val);
+    #endif
+  }
+  rcv_ = rcv;
+  
+
+add ( ia ib -- ires )
+  ires = ia + ib;
+
+
+\ ------------------------------------------------------
+\ yet another way to call C functions
+\ This way the C function has to use stack accessor macros to
+\ get parameters, self, number of parameters...
+\ ------------------------------------------------------
+cf0 ( #cfunc -- i_ret)
+  VALUE (*f)(Cell *fp) = cfunc;
+  i_ret = (f)( (Cell*)fp);
+
+cf1 ( i_arg1 #cfunc -- i_ret)
+  VALUE (*f)(Cell *fp, Cell arg) = cfunc;
+  i_ret = (f)( (Cell*)fp, i_arg1 );
+
+
+\ ------------------------------------------------------
+\ Proc#call
+\ ------------------------------------------------------
+ProcCall ( rcv meth inpar retip oldfp -- rcv meth inpar retip_ oldfp_ ) 
+  Proc   *p;
+  Block  *b;
+  p = (Proc*)rcv;
+  b = p->block;
+  oldfp_ = fp;
+  fp     = (char*)sp;
+  retip_ = IP;
+  SET_IP(b->code->code);  /* procs are vm code */
+
+
+
+\ ------------------------------------------------------
+\ ----    untested playground area starting here    ----
+\ ------------------------------------------------------
+
+
+\ ------------------------------------------------------
+\ this C function can get arbitrary many parameters from the
+\ ip stream
+\ ------------------------------------------------------
+cf_ip ( #cfunc #inum_param -- )
+  Cell (*f)(Inst *ip, Cell *fp) = cfunc;
+  (f)(ip,(Cell*)fp);
+  ip += inum_param;
+
+
+\ see the following newline:
+

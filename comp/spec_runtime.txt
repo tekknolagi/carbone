@@ -1,0 +1,11 @@
+Parts of the runtime system:
+
+* creating a new instance
+** [if using versioned classes: get latest version of this class]
+** count the number of ivars of this class, it's superclasses and all mixins
+** cache it in Class
+** allocate memory
+** put reference to class in there
+** [if using a list of instances for each class: insert it there]
+** return reference to memory
+

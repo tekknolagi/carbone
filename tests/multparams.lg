@@ -1,0 +1,25 @@
+;   -*-mode: Lisp; -*-
+
+; test multiple paraeteres, and especially whether they are accessed in 
+; the right way (first <-> last parameter)
+
+(snippets
+
+ ;; class Fixnum; def fib() self>2 ? (self-1).fib + (self-2).fib : 1 end end
+ ((body
+   ((send
+     (const (nil) Object)
+     define_method
+     ((lit (mult_param_method
+	    ((param a b c))
+	    (send (par a)
+		  * ((send (par b) + ((par c)))))))))
+    (lit (nil))))
+  (nil))
+
+ ((send
+   (lit 0)
+   mult_param_method
+   ((lit 10)(lit 3)(lit 4)))
+  70)
+ )

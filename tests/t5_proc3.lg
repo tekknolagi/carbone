@@ -1,0 +1,24 @@
+
+;   -*-mode: Lisp; -*-
+(snippets
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit (proc_gen3b
+	    ((param a b)
+	     heap_frame)
+	    (block (heap_frame)
+	     (block (heap_frame)
+	      (block (nil)
+	       (send (self) + ((send (par a) + ((par b))))))))))))
+
+    (send
+     (send
+      (send
+       (send (lit 5000) proc_gen3b ((lit 400) (lit 30)))
+       call (nil))
+      call (nil))
+     call (nil))))
+  5430)
+)

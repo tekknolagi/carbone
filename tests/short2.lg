@@ -1,0 +1,31 @@
+;   -*-mode: Lisp; -*-
+
+;; class Fixnum; def cd; self==0 ? 0 : ((self-1).cd; (self-1).cd) end end
+(snippets
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit
+       (count_down
+	(nil)
+	                                 ;; the compiler could know that
+;	 (long_if (((eql (lit 0) (self)) ;; we are inside an immediate
+	 (long_if (((send (lit 0) == ((self)))
+		    (lit 0)))
+		  (body
+		   ((send (send (self) - ((lit 1)))
+			  count_down
+			  (nil))
+		    (send (send (self) - ((lit 1)))
+			  count_down
+			  (nil)))))))))
+    (lit (nil))))
+  (nil))
+
+ ((send
+   (lit 21)
+   count_down
+   (nil))
+  0)
+ )

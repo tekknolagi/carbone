@@ -1,0 +1,15 @@
+( (true) (false) (nil)
+
+(and (atom true (atom false)
+
+(and (atom false) (atom false)
+
+(and (atom true) (atom false)
+
+(or (atom false) (atom false))))
+
+(or (atom true) (atom false))))
+
+(and (lvar a) (lvar b))
+
+)

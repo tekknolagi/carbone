@@ -1,0 +1,29 @@
+;   -*-mode: Lisp; -*-
+
+(snippets
+
+ ;; class Fixnum; def fib() self>1 ? (self-1).fib + (self-2).fib + 1 : 1 end end
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit (fibBench (nil)
+		 (long_if (((send (self) < ((lit 2)))
+			    (lit 1)))
+			  (send 
+			   (send
+			    (send (send (self) - ((lit 1))) fibBench (nil))
+			    +
+			    ((send (send (self) - ((lit 2))) fibBench (nil))))
+			   +
+			   ((lit 1))))))))
+    (lit (nil))))
+  (nil))
+
+ ;; gst: 32.fib
+ ((send
+  (lit 32)
+   fibBench
+   (nil))
+  7049155)
+ )

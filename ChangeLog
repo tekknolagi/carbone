@@ -1,0 +1,42 @@
+2002-04-14  Markus Liedl  <markus.lado@gmx.de>
+
+	* fond/callable.c: added `heap_frame' as a attribut for methods
+	and blocks, so that the VM doesn't have to walk the code at
+	runtime to see whether the frame should be in heap or on stack;
+	anonymous class methods (those for defining classes) always use
+	heap;
+	killed syntax check;
+	deprecated ilang_walker;
+
+2002-03-05  Markus Liedl  <markus.lado@gmx.de>
+
+	* comp/generator.c: ivars working; didn't generate code that makes
+	the step from Method to Callable for `invoke' which Class#new is
+	using 
+
+2002-03-04  Markus Liedl  <markus.lado@gmx.de>
+
+	* comp/generator.c: integration of Blocks; all tests except those
+	for ivars are running.
+
+2002-02-24  Markus Liedl  <markus.lado@gmx.de>
+
+	* comp/generator.c: starting refactoring work for generating
+	variables 
+
+2002-02-24  Markus Liedl  <markus.lado@gmx.de>
+
+	* configuration.rb: reworked configuration.rb: files are now
+	generated from configure.rb
+
+	* comp/generator.c: started working on proc creation; not sure
+	whether the contents of the closure should be specified explicitly
+	(that means, the generator wouldn't have to walk through the
+	proc's code to search for what context variables are used (and
+	therefore have to be in the closure)
+
+Fre Jan 11 06:06:55 CET 2002
+	got send working:
+	
+	(send (lit 1) + ((lit 1)))
+	  ==> 2

@@ -1,0 +1,118 @@
+;   -*-mode: Lisp; -*-
+;
+; class Fixnum
+;   def proc_generator()
+;     c = 3; d = 10
+;     proc { (self+c)*d }
+; end end
+;
+;  (with the call to proc left out, because it only returns the
+;   object in the proc slot; in other words: the code below has
+;   no direct Ruby equivalent)
+;
+;  (yes, yes, and :block_given? should be named :proc_given?; which 
+;   should not mean that a Proc can not be used as a Block...)
+;
+(snippets
+ ((body
+   ((send
+     (const (nil) Fixnum) define_method
+     ((lit (proc_generator
+	    ((lvar c d)
+	     heap_frame)
+	    (body
+	     ((lv= c (lit 3))
+	      (lv= d (lit 10))
+	      (block          ; lets create a Block - at compile time;
+	       (nil)          ; at runtime a Proc is created
+	       (send (send (self) + ((lv c)))
+		      * ((lv d))))))))))
+
+    (send
+     (send (lit 5) proc_generator (nil))
+     call
+     (nil))))
+  80)
+
+
+
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit (proc_generator2
+	    ((lvar c d)
+	     heap_frame)
+	    (body
+	     ((lv= c (lit 3))
+	      (lv= d (lit 10))
+	      (block (heap_frame)
+	       (block (nil)
+		(send (send (self) + ((lv c)))
+		      * ((lv d)))))))))))
+
+    (send
+     (send
+      (send
+       (lit 5)
+       proc_generator2 (nil))
+      call (nil))
+     call (nil))))
+  80)
+
+
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit (proc_gen3
+	    ((param a b) heap_frame)
+	    (block (heap_frame)
+	      (block (nil)
+		(send (self) + ((send (par a) + ((par b)))))))))))
+    (send
+     (send
+      (send (lit 5000) proc_gen3 ((lit 400) (lit 30)))
+      call (nil))
+     call (nil))))
+  5430)
+
+
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit (proc_gen4
+	    ((lvar ml)
+	     (param mp)
+	     heap_frame)
+	    (body
+	     ((lv= ml (lit 30000))
+	      (block
+		  ((lvar p1l)
+		   (param p1p)
+		   heap_frame)
+		(body
+		 ((lv= p1l (lit 3000))
+		  (block
+		      ((param p2p))
+		    (send
+		     (send
+		      (send
+		       (send (lv ml) + ((par mp)))
+		       + ((lv p1l)))
+		      + ((par p1p)))
+		     + ((par p2p)))))))))))))
+
+    (send
+     (send
+      (send
+       (lit 1234)
+       proc_gen4 ((lit 400)))
+      call ((lit 40)))
+     call ((lit 4)))))
+  33444)
+
+
+)
+

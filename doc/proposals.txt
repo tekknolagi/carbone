@@ -1,0 +1,25 @@
+
+vmgen4rb
+--------
+Ruby parser for vmgen .vmg files
+Ruby writer for those files
+(in between some Ruby datastructure)
+
+carbone based rb2c translator (needs .vmg parser, when done with Ruby)
+
+
+garbage collection:
+-------------------
+young generation frontend to Boehm collector. It could be much more
+general than targetting only the Carbone VM; measure performance of a
+copying collector; write barrier;
+
+
+
+Framework for builtins that are written in C
+--------------------------------------------
+Should support inlining into the VM, but also as a dynamically loaded
+library. Could be used by all C builtins, so everything can be left
+out when compiling Carbone.
+see  carbone/tests/basics/gc; boehm-tree.c tries to measures Boehm GC
+

@@ -1,0 +1,69 @@
+;   -*-mode: Lisp; -*-
+;
+;
+
+; module Kernel; def proc(&p) p end end
+
+
+((Object
+
+  (respond_to?
+   ((param   selector))
+   (body
+    (
+    ;(scond (true) (eql (classOf (par selector)) (const (nil) String))
+    ;              (par= selector (send (par selector) intern (nil))))
+     (boundp (self) (par selector))))))
+
+
+ (Fixnum
+
+  (eql?
+   ((param other))
+   (eql (self) (par other)))
+  
+  (==
+   ((param  other))
+   (eql (self) (par other))))
+
+
+ (Class
+
+  (define_class                    ; defining a new class
+    ((param  classname superclass classbody)
+     (lvar   new-class))
+    (body
+     ((lv= new-class
+	   (cfunc class_define
+	    (par classname)
+	    (par superclass)
+	    (par classbody)))
+
+      (invoke (lv new-class)
+	      (cfunc class_compile_body
+	       ;; compiles the class-def-code into a (anonymous) Method object
+	       (lv new-class)
+	       (par classbody)))
+
+      (lv new-class))))
+    
+
+  ; creating new instances
+  (new
+   ((rest  parameters)
+    (lvar  instance))
+   (body
+    ((lv= instance (cfunc obj_new (self)))
+     (scond (true)
+	    (boundp (self) (lit initialize)) ;; cache this!
+	    (send (lv instance)
+		  initialize
+		  (nil) parameters))    ;; copy&paste all parameters;
+                                        ;; forwarding a proc doesn't
+                                        ;; work yet 
+     
+     (lv instance))))
+  )
+ )
+
+

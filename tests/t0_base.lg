@@ -1,0 +1,66 @@
+;   -*-mode: Lisp; -*-
+#
+# `snippets' begins a sequence of pairs of
+#
+#  (some-code expectedresult)
+#
+
+(snippets
+  ((lit 112)
+   112)
+
+  ((lit (true))
+   (true))
+
+  ((lit -1012)
+   -1012)
+
+  ((scond (true) (lit (false)) (lit (false)))  (false))
+  ((scond (true) (lit (true)) (lit (false)))   (false))
+  ((scond (true) (lit (false)) (lit (true)))   (false))
+  ((scond (true) (lit (true)) (lit (true)))    (true))
+
+  ((scond (false) (lit (false)) (lit (false)))  (false))
+  ((scond (false) (lit (true)) (lit (false)))   (true))
+  ((scond (false) (lit (false)) (lit (true)))   (true))
+  ((scond (false) (lit (true)) (lit (true)))    (true))
+
+  ((scond (true) (lit (true))
+	  (scond (false) (lit (false)) (lit (true))))
+   (true))
+
+  ((body
+    ((scond (true) (lit 112) (lit 113))
+     (scond (true) (lit 114) (lit 115))
+     (scond (false) (lit 12) (lit 013))))
+   12)
+
+  ((scond (false) (lit symbols_are_true) (lit other_symbol))   symbols_are_true)
+
+  ((long_if
+    (((lit (false))      (lit 999))
+     ((lit (nil))        (lit 888))
+     ((lit 3)            (lit 4)))
+    (lit 7))
+   4)
+
+ ((long_if
+   (((eql (lit 1)  (lit 2))   (lit 100))
+    ((eql (lit 12) (lit 13))  (lit 200))
+    ((eql (lit 13) (lit 14))  (lit 300))
+    ((eql (lit 14) (lit 14))  (lit 999)))
+   (lit 888))
+  999)
+
+
+ ((cfunc tree_dump (lit (a b c (d e f))))
+  (nil))
+
+
+ ((body
+   ((const= (nil) TTT (lit 132))
+    (eql
+     (const (nil) TTT)
+     (lit 132))))
+  (true))
+)

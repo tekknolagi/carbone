@@ -1,0 +1,74 @@
+
+Some Source Guide
+-----------------
+
+Important note:
+
+   I did change the name of Matz' "Method" to "BoundMethod", and
+   Matz' "UnboundMethod" is called "Method" here.
+
+   What the code that executes inside the VM sees behind the constants
+   ::Method and ::UnboundMethod is another question and facile to
+   change.
+
+
+In fact, there are two central files:
+
+   vm/rb-inst.vmg
+
+     This file contains definitions of the VM primitives. You may have
+     a look at Anton Ertl's Paper about vmgen and also the vmgen-ex
+     ("ex" reads "example") delivered with the said gforth snapshot. 
+
+     vmgen (and some helper scripts in Ruby) produce the files
+     in carbone/vm/gen; have a look at carbone/vm/Makefile
+ 
+
+
+   comp/generator.c
+
+     The code in this file does the last process of the compiler:
+     generating a sequence of instructions.
+
+     The intermediary language that other compilers use as input for
+     this step is exactly what you pipe into carbone. (i.e. ./gen)
+
+
+and then:
+
+   fond/rb.h
+
+     structs for all known classes of objects
+
+
+   fond/value.h
+
+     VALUE space definitions; immediate v. indirect objects
+
+
+
+
+
+
+Basic Processes
+---------------
+
+
+class creation:
+
+   send class def to Class#define_class (carbone/builtins.lg); compile
+   class  definition code  to  a method;  execute  this internal  (and
+   hidden) method with the new class as self.
+
+
+method creation:
+
+   send  method  def to  Class#define_method.  This  Method itself  is
+   (still) hardcoded in /main.c;  it uses meth_from_list() to create a
+   Method object  (which is  unbound!) and then  calls meth_generate()
+   which compiles the given code;
+
+
+proc creation:
+
+   

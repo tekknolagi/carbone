@@ -1,0 +1,82 @@
+
+
+
+----------------------------------------------------------------------
+-- process for compilation of classes:                              --
+----------------------------------------------------------------------
+
+compile classes from
+
+   (def_class name super code)
+
+to
+
+   (eval (m (const Compiler) compile_class ((name super code))))
+
+where
+
+  def Compiler.compile_class(name, super, lit)
+    (cfunc class_compile_class (param name) (param super) (param lit)) 
+  end
+
+
+----------------------------------------------------------------------
+(inside a method invocation we know:
+  * self
+----------------------------------------------------------------------
+-- process for compilation of methods:                              --
+----------------------------------------------------------------------
+compile method definition from
+
+  (def_method (target name (parameter-list) array proc (method-code)))
+  
+to
+
+  (m (const Compiler) compile_method
+    ( (scond(false)(target)(self)) (name (param-list) (array) (proc) (code) )))
+
+where
+
+  def Compiler.compile_method( target_class, meth_def )
+    (cfunc class_compile_method (param meth_def))
+  end
+
+----------------------------------------------------------------------
+(inline constants
+
+(pre-evaluate method-calls that are marked as pure (no-side-effects)
+   (methods without non-local assignments are pure
+     (and also methods that invoke only pure methods
+
+(reduce if/?/unless as far as possible
+  (( e.g.:
+       * 'if true && x then y;' ==> 'if x then y';
+       * 'if false && x then y' ==> ''   (( if x is pure ))
+
+(inline attribute access  // there are more attrs than methods
+
+(inline method's
+
+
+(check lvar visibility, if possible translate them to stack-vars
+
+count lvars and stack-vars
+allocate objects for lvars
+allocate frame for stack-vars
+
+generate instructions from tree
+
+-execute
+----------------------------------------------------------------------
+
+where allocate FID??
+
+----------------------------------------------------------------------
+
+
+don't optimize functions that call 'eval'
+
+if all assignments to a local-variable are not in proc{}'s, but
+somehow directly in the enclosing method, then it's not neccessary to
+access them doubly indirect over a lvar-object.
+

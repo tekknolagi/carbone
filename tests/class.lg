@@ -1,0 +1,15 @@
+;   -*-mode: Lisp; -*-
+(snippets
+ ;; class AClass
+ ;;   123456
+ ;; end
+ ((body
+   ((send
+     (const (nil) Class)
+     define_class
+     ((lit AClass)
+      (const (nil) Object)         ; superclass
+      (lit (((ivar @a))
+	    (lit 123456)))))       ; class code
+    (lit (nil))))
+  (nil)))

@@ -1,0 +1,40 @@
+;   -*-mode: Lisp; -*-
+#
+#
+(snippets
+
+ ;; class AClass
+ ;;   def a=(a); @a = a; end
+ ;;   def a ();  @a; end
+ ;; end
+ ((body
+   ((send (const (nil) Class) define_class
+	  ((lit AClass)
+	   (const (nil) Object)      # superclass
+	   (quote (((ivar @a_attr))
+		   (body
+		    ((send (self) define_method
+			   ((quote (a_attr=
+				    ((param a))
+				    (iv= @a_attr (par a))))))
+		     
+		     (send (self) define_method
+			   ((quote (a_attr
+				    (nil)
+				    (iv @a_attr)))))))))))
+
+
+    ;; I1=AClass.new; I2=AClass.new; I1.a_attr=111; I2.a_attr=34000;
+    ;; I1.a_attr + I2.a_attr
+
+    (const= (nil) AClassInstance1 (send (const (nil) AClass) new (nil)))
+    (const= (nil) AClassInstance2 (send (const (nil) AClass) new (nil)))
+    (send (const (nil) AClassInstance1) a_attr= ((lit 111)))
+    (send (const (nil) AClassInstance2) a_attr= ((lit 34000)))
+
+    (cfunc tree_dump (lit (a b c))) ; uses malloc => activate mem checker
+
+    (send (send (const (nil) AClassInstance1) a_attr (nil))
+	  + ((send (const (nil) AClassInstance2) a_attr (nil))))))
+  34111)
+)

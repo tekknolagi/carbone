@@ -1,0 +1,53 @@
+;   -*-mode: Lisp; -*-
+#
+#
+; class Fixnum; def fib();
+;   if self > 2
+;     xm1 = self-1; xm2 = xm1-1;
+;     a = xm1.fib; b = xm2.fib;
+;     a + b
+;   else 1; end
+; end; end; 30.fib
+
+(snippets
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit (fib
+	    ((lvar xm1 xm2 a b))    ;; Those are our local variables.
+	                            ;; They are on the stack, since there
+                                    ;; is no Block (i.e. `{...}') inside
+	                            ;; This is expressed by the fact that
+	                            ;; a `heap_frame' is missing here.
+	    (long_if
+	     (((send (self) > ((lit 2)))
+	       (body
+		((lv= xm1 (send (self)   - ((lit 1))))
+		 (lv= xm2 (send (lv xm1) - ((lit 1))))
+		 (lv= a (send (lv xm1) fib (nil)))
+		 (lv= b (send (lv xm2) fib (nil)))
+		 (send (lv a) + ((lv b)))))))
+	     (lit 1))))))
+    (lit (nil))))
+  (nil))
+
+ ((send
+   (lit 2)
+   fib
+   (nil))
+  1)
+
+ ((send
+   (lit 3)
+   fib
+   (nil))
+  2)
+
+ ((send
+   (lit 30)
+   fib
+   (nil))
+  832040)
+
+)

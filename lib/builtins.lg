@@ -1,0 +1,38 @@
+;   -*-mode: Lisp; -*-
+;
+;
+
+((Fixnum
+
+     (eql?                                 ; method name 
+      ((other))                            ; parameters
+      (nil)                                ; rest-parameter
+      (nil)                                ; proc
+      (nil)                                ; list of svars in method
+      (long_if                             ; code
+       (((eql (self) (mpar other))
+	 (lit (true))))
+       (lit (false))))
+
+     (@+  ((nil))(nil)(nil)(nil)
+	  (self))
+
+     (@-  ((nil))(nil)(nil)(nil)
+	  (send (lit 0) - ((self))))
+
+     (==  ((other))  (nil)(nil)(nil)
+	  (long_if
+	   (((eql (self) (mpar other))
+	     (lit (true))))
+	   (lit (false))))
+
+     (> ((other))(nil)(nil)(nil)
+	(send (mpar other) < ((self))))
+
+     (<=> ((other))  (nil)(nil)(nil)
+	  (long_if (((send (self) < ((mpar other)))
+		     (lit -1))
+		    ((send (mpar other) < ((self)))
+		     (lit 1)))
+		   (lit 0)))
+))

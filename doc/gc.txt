@@ -1,0 +1,21 @@
+
+
+Garbage Collection
+------------------
+
+Till now I haven't made  great efforts for the garbage collector (just
+linked in  Boehm's collector.  Maybe I won't  do since it  seems quite
+efficient  (but  then,  I  haven't  yet  done  realistic  tests;  only
+tests/ivars.lg and tests/lvars.lg, where all objects die very soon).
+
+The following environment variables may be interesting
+
+  export GC_PRINT_STATS=1          reports GC activity
+
+  export GC_DONT_GC=1              Together with the first option:
+                                   shows complete memory need.
+
+
+Note:  A  faster  solution  would  probably be  to  use  a  compacting
+collector for  the youngest generation,  and something else  for older
+inhabitants (e.g. Boehm collector; train-collector, ..).

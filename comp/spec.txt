@@ -1,0 +1,289 @@
+
+
+
+
+(this is what rests from an old version;
+ most things are wrong... (except these hairy versioned classes...))
+
+
+
+
+
+
+			 How to compile Ruby?
+		  I===============================I
+
+
+
+
+The last step in compilation (generation of a sequence of primitive
+instructions) is not regarded here. 
+
+In no certain order, especially not yet in an order a reasonable
+compiler would walk through this list of transformations.
+
+
+Assuming the Ruby Compiler and the virtual machine are running in the
+same address space, so the machine can call the compiler whenever
+necessary and the compiler can communicate compiled code easily back
+to the interpreter.
+
+
+
+
+simplify proc parameters
+----------------------------------------
+A lot of different constructs are allowed as parameters for
+procs. change the tree, so that the parameters get simple
+stack-locations and insert code to the beginning of the proc code that
+does the real write to whatever location is required. (global var,
+attribute, setter, arbitrary method)
+
+
+simplifiy optional parameters
+----------------------------------------
+Calls to the code of a suchlike method should have the same behaviour,
+not depending on where the actual values are comming from.
+
+(e.g. def x(a=9; b=10);
+        some_code
+      end)
+
+(to: def x(*allp);
+       a = (allp.length>0 && allp[0]) || 9
+       b = (allp.length>1 && allp[1]) || 10
+       some_code
+     end
+     => a and b are newly inserted lvar's and not mpar's.)
+
+
+
+bubble lvars
+----------------------------------------
+Regard lvar use as a lvar definition; Bubble lvar definitions up as
+far as possible. This border will be the lexical border of a
+class-def., meth-def. or proc-creation.; e.g. a method definition
+will not only contain the names of the parameters, but also the names
+of used lvars. 
+
+If a lexical context has two lexical sub-contextes, it may happen, that
+two variables have the same name, but represent different value
+holders. They have to be made unique before, and this mapping has to
+be saved.
+
+If possible move the definition of a variable in a proc, to the outer
+context.
+
+Rationale: Doing lookups of local-variables over multiple stack-frames
+is slower than using one bigger stack frame for a combined lexical
+context.
+Also: pushing a stack-var frame is not expensive, nevertheless it
+costs, so it's good to group them. 
+
+
+
+map lvars to memory
+---------------------------------------------
+(or: Transform each lvar into a stack-var or mem-var)
+[ dict: lvar == local variable ]
+
+Explanation: each time a mem-var (or a couple of them) should be
+created, a malloc will be performed to reserve some persistent memory
+(in contrast to stack-vars, that exist only as long as the creating
+context has not finished execution). Since a malloc takes more runtime
+than an allocation on the stack, it's preferable to put it on the stack.
+mem-vars will be can be read and written by a offsetted memory access
+(e.g. mem-vars-frame[mem-var-id]). The reference to the frame is
+laying on the stack. (another speed-disadvantage is this additional
+indirection in accessing them).
+
+The rules for deciding whether a lvar
+ o  can be a stack-var, or
+ o  has to be a mem-var
+is kind of hairy:
+
+A lvar has to be translated to a stack-var, if there is inside the
+lvar's context 
+* a `eval' somewhere
+* a Binding object creation somewhere
+* a proc{} creation, whose code assigns to the lvar
+* a proc{} creation and some other code assigns to the lvar after proc
+  creation 
+
+(Also: Store metadata about that decision in the context, so one
+can investigate it later.) 
+
+Rationale: This is necessary to create proc's that can reference a
+variable whenever they are called (which can in general not be
+predetermined). 
+
+
+proc creation (or "how to not break closures")
+-----------------------------------------------
+
+If a proc uses a stack-var of a outer lexical context, the _value_ of
+the stack-var will be saved in the proc.
+
+If a proc uses a mem-var of a outer lexical context, the _reference_
+to the mem-var will be saved. So it can be read _and_ written from the
+proc's code.
+
+
+translate local variables to stack operations
+---------------------------------------------
+
+This translation will produce code, that uses less stack-space for
+variables, if they appear only locally.
+
+This is the same thing, gcc does in mapping variables to a unlimited
+number of virtual registers, and then, mapping them to real registers
+and a stack slice. 
+
+
+map parameters to mem-vars, if necessary
+----------------------------------------
+Parameters are naturally given on the stack, but if a proc is created
+inside such a method, and the proc wants to write into the parameter,
+then the parameter has to be translated into a mem-var and code has to
+be inserted into the beginning of the method, that moves the value
+from the parameter location to the mem-var location. 
+
+Rationale: This is necessary to create procs that can reference a
+parameter, whenever they are called.
+
+
+
+compile class def
+----------------------------------------
+Translate the parse nodes corresponding to
+
+   `class class_name < super_class; class_body; end'
+
+to
+
+   `Class::define_class(class_name, super_class, class_body)'
+
+where
+  class_name is passed as a Symbol,
+  super_class is passed as a Class, and
+  class_body is passed as a tree.
+
+
+Class::define_class'es default behaviour is to do two things:
+
+* Create the class class_name if it does not yet exist and
+  write it to the constant class_name.  
+    - If super_class is nil, class Object is assumed.
+    - If the class exists and super_class is not the real super_class
+      an error is returned and nothing is done.  
+
+
+* Class::define_class will send a message :eval to the new class
+  instance and give the tree as parameter:  
+
+`the_new_class.eval(class_body)'
+
+The default behaviour of Class#eval is to compile the class_body to a
+Code object _and_ invoke it. 
+
+During execution of class_body the new Class itself is available as
+self.
+
+I'm not sure about the name, maybe Class::define would be better, so
+one wouldn't have to say Module::define_module, but Module::define.
+
+Class definition is definitively no time critical part, so, if you
+know a better architecture with better customisability, I would love
+to hear from you.
+
+
+
+compile singleton class def
+----------------------------------------
+[WRITEME]
+
+
+compile method def
+----------------------------------------
+[WRITEME]
+
+
+
+compile proc creation
+----------------------------------------
+[WRITEME]
+
+
+
+all the reflection stuff
+----------------------------------------
+A lot of things substituted at compile time...
+
+
+
+compile operator-assignments
+----------------------------------------
+
+(op_assign Var Op Right)
+
+should become
+
+(assign Var (Op Var Right))
+
+
+
+
+multiple assigments
+----------------------------------------
+
+
+
+array expander (exploser, imploser)
+----------------------------------------
+
+
+
+complex literals (Arrays, Hashes, interpolated Strings, re)
+-----------------------------------------------------------
+
+
+
+
+continuations
+----------------------------------------
+
+Is a complete stack copy the only way?
+
+
+
+[ FIXME: Add all the more important, missing translations before going
+to the crazy things below ]
+
+
+
+
+[ FIXME: specify where the compiler imposes blocking all other
+threads, or only blocking one class, one method, ... ]
+
+
+
+
+partial evaluation
+----------------------------------------
+Using the methods of the built-in classes.
+Metadata for built-in methods will be necessary:
+* `is_pure?' (e.g. doesn't have side-effects) 
+
+If specified for all built-ins(positiv or negative), this attribute
+determined automatically for user defined methods. 
+
+
+
+=========
+
+
+Surely, the compiler should be written in Ruby. No?
+
+
+
+

@@ -1,0 +1,123 @@
+.PS
+
+boxwid = 1.8;
+boxht = 0.25
+
+down; 
+
+box invis \
+	 "def fib_proc(a)" ljust\
+	 "   b = a.fib" ljust\
+	 "   proc{" ljust\
+         "         a,b = b, a+b" ljust\
+	 "         b" ljust\
+         "       }" ljust\
+	 "end" ljust\
+	 "g=fib_proc(6); g.call; g.call; ..." ljust
+
+
+move down 2;
+
+define desc {
+	 { box $1 wid 2.1 ljust invis with .e at last box.w }
+}
+define call_frame {
+        fillval = 0.16;
+	Rcv:	box $1 filled desc("receiver:")
+	M:	box $2 filled desc("method:")
+	NP:	box $3 filled desc("#params:")
+	Ret:	box "return IP" filled
+	OFP:	box "old frame pointer" filled
+        fillval = 0;
+#	move down boxht
+}
+	
+define call_frame_plus_fp {
+	call_frame($1,$2,$3)
+	{
+	[left; box wid 0.2 invis "fp"; A: arrow 0.2 ] with .A.end at OFP.e; 
+        }
+}
+
+move right 2
+{
+  "stack before " "entering method:"
+  move down
+
+  box "6"; desc("1st param")
+  call_frame_plus_fp("none", "fib_proc", "1")
+}
+
+move right 3.5
+{
+  "move self, parameters and" "variables into heap;" "proc creation"
+  move down
+
+  box "6"; desc("1st param")
+  call_frame("none", "fib_proc", "1"); FIRST_FP: OFP;
+
+  
+  LVARFRAME: box "lvar frame";
+  { 
+    move from LVARFRAME.e right 1 up 5;
+    down;
+    LVars:
+     box "\fBFrame\fR"
+     box "none" desc("self:")
+     box "none" desc("next super:")
+     box "a = 6" desc("params:")
+    LVarsS:
+     box "b = 8" desc("vars:")
+
+   {
+     spline from LVARFRAME.e right 1 then up 3 then up 1/2 then to LVarsS.s ->;
+   }
+    move from LVars.n right 3; 
+    down;
+  ProcInst:
+      box "\fBProc instance\fR";
+    NewProc:
+      box ht 0.8;
+       {
+         box invis "list of " "outer contexts" with .n at NewProc.n ht 0.5
+         box "lvar frame" with .se at NewProc.se wid boxwid*3/4
+       }
+        {spline from last box.w then left 1 then up 0.8 left 0.1 then to LVars.e ->}
+  }
+
+  move down boxht
+  PrcSlot: box; desc("proc slot:")
+  call_frame_plus_fp("none", "proc", "0")
+  { spline from OFP.w left 1.2 then up 1.7 then to FIRST_FP.w ->;
+  }
+
+  { spline from PrcSlot.e right 1.4 up 1/3 then up 3 then to ProcInst.w ->; }
+
+
+  move down boxht;
+
+  box "proc returns " "object in proc slot" ht 0.5;
+
+  move down 2*boxht;
+  
+  box wid 4 ht 1 \
+   "from  'b = a.fib':" " b has already been written " \
+   "using it's location in the heap."
+
+}
+
+
+
+
+move right 5
+{
+  "proc call";
+  move down;
+
+ProcRef:
+  call_frame_plus_fp("", "call", "0")
+
+       { spline from Rcv.e right 0.5 then up 1 up 1.5 then to ProcInst.e ->}
+}
+
+.PE

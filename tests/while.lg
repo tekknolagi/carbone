@@ -1,0 +1,20 @@
+;   -*-mode: Lisp; -*-
+#
+#
+(snippets
+
+ ((body
+   ((send
+     (const (nil)  Object)
+     define_method
+     ((lit (count_down ((param beg))
+		       (while
+			   (send (lit 0) < ((par beg)))
+			 (par= beg (send (par beg) - ((lit 1)))))))))
+    (lit (nil))))
+  (nil))
+
+ ((send (lit 0) count_down ((lit 1000000)))
+  0)
+
+)

@@ -1,0 +1,61 @@
+
+;   -*-mode: Lisp; -*-
+#
+#
+(snippets
+
+ # -----------------------8<--------------------
+ ; class Fixnum
+ ;   def cd
+ ;     if self==0
+ ;       1+2+3+4+5
+ ;       1+2+3+4+5
+ ;       0
+ ;     else
+ ;       ((self-1).cd; (self-1).cd)
+ ;     end
+ ;   end
+ ; end
+ # ---------------------->B---------------------
+
+ ((body
+   ((send
+     (const (nil) Object)
+     define_method
+     ((lit (count_down (nil)
+			(long_if
+			 (((send (lit 0) == ((self)))
+			   (body
+			    (
+			     (send (lit 1) +
+				   ((send (lit 2) +
+					  ((send (lit 3) +
+						 ((send (lit 4) + ((lit 5))
+							)))))))
+			     (send (lit 1) +
+				   ((send (lit 2) +
+					  ((send (lit 3) +
+						 ((send (lit 4) + ((lit 5))
+							)))))))
+			     (lit 0)))))
+			 ;; else
+			 (body
+			  ((send (send (self) - ((lit 1)))
+				 count_down
+				 (nil))
+			   (send (send (self) - ((lit 1)))
+				 count_down
+				 (nil)))))))))
+    (lit (nil))))
+  (nil))
+
+ ((send (lit 20) count_down (nil))
+  0)
+ ; the 'else' branch is called 1M times:
+ ;    4 sends in it => ~4M sends
+ ;    2 of them are non-builtins
+ ; the 'then' branch is also executed ~1M times:
+ ; 8*1M => ~8M
+ ; ===================
+ ;  12M sends among them 2M non-builtins
+)

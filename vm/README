@@ -1,0 +1,73 @@
+
+To understand whats going on you should be familiar with the example
+delivered with vmgen. The names here are also similar, except that I
+renamed `mini' to `rb'.
+
+
+The files here
+==============
+
+rb-inst.vmg
+-----------
+This is the main file for building the VM. All basic instructions are
+defined here. The definitions for super-instructions are added to
+produce rb.vmg, which is input for vmgen. (see Makefile)
+(currently builtins are comiled to a vmg-snippet; this file
+ 'builtins/all_builtins.vmg' is is simply inserted before
+ superinstruction defs)
+vmgen produces the files `vm/gen/rb-xxx.i' from this description.
+
+
+rb-super.vmg
+------------
+Those are the definitions for superinstructions.
+To delete them: `echo >rb-super'
+They are filled automatically: `cd <carbone-root>; make o t=trainig_file.lg'
+vm/si-choice takes all sequences that execute more than 10000 times.
+
+gen/rb-vm.i
+-----------
+Produced by vmgen. Contains the processed instructions. Another
+preprocessor task is to produce 'private labels' per instruction.
+This is necessary because super-instructions are nothing but a (well
+combined) repetition of basic instructions, so, a label could well
+appear more than once. To avoid this, labels in the rb-inst.vmg are
+not named `label:' but `label<new-id>:' and `label<id>:' where the
+first allocates a new id and the second repeats the last allocated
+id. (when processing simply from top to bottom)
+
+This process generates gen/rb-vm-lbl.i which is then actually
+included in engine.c.
+
+
+basic blocks - profiling
+------------------------
+
+To see the basic blocks interactivly:
+$ gdb gen
+(gdb) b vm_count_block
+(gdb) run -ict some_code.lg
+(gdb) c
+(gdb) c
+(gdb) c
+
+
+
+look inside
+===========
+
+There are two sepcial `make' goals to examine the engine:
+
+   make E
+ 
+will show the precompiled engine code; may be interesting to find
+errors. 
+
+
+   make engine.gdis
+
+will invoke gdb with disas_insns.gdb; this is a gdb script that
+disassembles the vm. 
+(the script is now bastardly slow; any ideas?)
+
+

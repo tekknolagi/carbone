@@ -1,0 +1,45 @@
+.PS
+
+boxwid = 1.5;
+boxht = 0.2
+
+down; 
+
+box invis \
+	 "class Fixnum; def fib()" ljust\
+	 "   a, b = self -1,  self -2" ljust\
+	 "   self<=2 ? 1 : (a + b)" ljust\
+	 "end end" ljust\
+	 "6.fib" ljust
+
+move down right 2;
+
+"stack-snapshot before last addition:   " rjust below
+move down
+
+define desc {
+	 { box $1 invis with .e at last box.w }
+}
+
+
+
+box "6";		desc("receiver:")
+box "Fixnum#fib";	desc("method:")
+box "0"			desc("#params:")
+
+box "return IP"
+box "old frame pointer"
+move down boxht
+
+box "3    (=4.fib)";		desc("lvar a:")
+box "5    (=5.fib)";		desc("lvar b:")
+move down boxht
+
+box "5"			desc("1. param:")
+box "3"			desc("receiver:")
+box "Fixnum#+"		desc("method:")
+box "1"			desc("#params")
+
+
+
+.PE

@@ -1,0 +1,147 @@
+.PS 
+# 8.5  11
+
+box invis\
+"class Fixnum" ljust\
+"  def f(y)" ljust\
+"    u = 7" ljust\
+"    proc {|a| v = 9" ljust\
+"      proc {|b| w = 40; x = 67" ljust\
+"        proc {|c| "ljust\
+"          res = 199" ljust\
+"        }" ljust\
+"      }" ljust\
+"    }" ljust\
+"  end" ljust\
+"end" ljust\
+"3.f(88)[77][66][55]" ljust
+
+#boxwid = 0.4
+#boxht = 0.3
+arrowht = 0.08
+arrowwid = 0.03
+move down 1;
+
+box invis "context for the innermost proc:"
+move from last box.s down 1/4;
+
+right;
+METH:box "\fBMethod\fR" "Fixnum#f"
+     arrow boxwid <- "outer" above
+B1:  box "\fBBlock\fR" "{|a| v = ...}"
+     arrow boxwid <- "outer" above
+B2:  box  "\fBBlock\fR" "{|b| w = ...}"
+     arrow boxwid <- "outer" above
+B3:  box  "\fBBlock\fR" "{|c| res = ...}"
+
+
+boxht = 0.2
+ah = 0.3
+
+
+down;
+
+box "true" with .n at METH.s
+    { box invis "has Frame?" with .e at last box.w; }
+
+box "[y]";
+    { box invis "parameters:" with .e at last box.w; }
+
+box "[u]";
+    { box invis "variables:" with .e at last box.w; }
+
+ #"context instance:" \
+
+
+    {  box invis \
+         with .ne at 2nd last box.w - (0,0.3) ht 0.4
+
+      box invis "context values:" rjust wid 1.2 ht 0.4
+
+      box invis "self"
+
+   }
+
+line down ah <-
+box dashed "\fI Bound Method\fR" wid 1
+#{ line dotted from last box.s to last box.n }
+ { line        from last box.s to last box.n }
+line down ah
+MFRAME: box "Frame"; box "3"; box "88"; box  "7";
+
+
+{ move down 1.3 right 0
+box invis wid 2 \
+ "note:" ljust\
+ "  first 'outers' points "ljust\
+ "  always to a method frame" ljust
+}
+
+
+le = (boxwid*(1/2+1/8))
+
+box "true" with .n at B1.s
+  box "[a]"
+  box "[v]"
+  line ah <-
+  box "Proc"
+  line ah <->
+  box "Frame"
+  box "3"
+  B: box ht 2*boxht; { box invis "outers" with .n at B.n }
+    {
+      box wid 3/4*boxwid with .se at B.se;
+      spline from last box.w left le then up 3*boxht then left le ->
+    }
+  box "77"
+  box "9"
+  
+
+box "true" with .n at B2.s
+  box "[b]"
+  box "[w, x]"
+  line ah <-
+  box "Proc"
+  line ah <->
+  box "Frame"
+  box "3"
+  B: box ht 3*boxht; { box invis "outers" with .n at B.n }
+    {
+      up;
+      box wid 3/4*boxwid with .se at B.se;
+      {
+        spline from last box.w left le then up 4*boxht then left le ->
+      }
+      box wid 3/4*boxwid with .s at last box.n;
+      {
+        spline from last box.w left le-0.15 \
+               then up 4.25*boxht then left 0.8 then left boxwid+0.4\
+               then to 0.2<MFRAME.ne,MFRAME.e> \
+               ->
+      }
+    }
+  box "66"
+  box "40"
+  box "67"
+
+
+box "false" with .n at B3.s
+  box "[c]"
+  box "[res]"
+  line ah <-
+  box "Proc"
+  line ah <- 1
+  box "somewhere" "on Stack" ht 1/2
+  box ; { spline from last box.w left boxwid/3 \
+                         then up 1.3+boxht \
+                         then left boxwid*2/3 ->}
+  box "..." ht boxht*0.7
+  box "55"
+  box "..." ht boxht*0.7
+  box "199"
+
+
+
+
+
+.PE

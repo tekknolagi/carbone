@@ -1,0 +1,61 @@
+;;   -*-mode: Lisp; -*-
+;;
+;; (cfunc ...) is intended to implement primitive object functionality
+;; and to call the compiler for still uncompiled constructs inside of code. 
+;;
+;; It is intended to be mostly used with VALUE parameters
+;;
+;; to use it for a general replecement for C, a lot of things are missing:
+;;  * accessing c structs
+;;  * giving pointers and pointers to pointers ...
+
+(snippets
+
+ ;; let's call printf with a integer parameter
+ ((body
+   ((cfunc printf
+	   (char* "that's a value: %li\n")
+	   (lit 1112))
+    (lit (true))))   # just dummy result since printf is void
+  (true))
+
+ ((body
+   ((cfunc printf
+	   (char* "that's a integer: %li\n")
+	   (cfunc value2long (lit 1112)))
+    (lit (true))))   # just dummy result since printf is void
+  (true))
+  
+  
+  ((body
+    ((cfunc printf
+	    (char* "that's a string: '%s'\n")
+	    (char* "woodl-doodl"))
+     (lit (true))))
+   (true))
+  
+
+  ( (body
+     ( (cfunc printf
+	(char* "experiment gave '%s'\n")
+	(cfunc strcat
+	 (cfunc strcat
+	  (cfunc strcpy 
+	   (cfunc malloc (cfunc value2long (lit 1000)))
+	   (char* "begin:"))
+	  (char* "second-part"))
+	 (char* ":end")))
+       (lit (true))))
+    (true))
+
+
+
+
+  ((body
+    ((cfunc tree_dump
+      (lit ((asd (uio qwe qwe qwe) (yxc xcv cvb ( qwe wrt ert rtz) iop 112)
+                   (jkl asd ( qwe wert etz) qwe re) (ghj (asd asd) asd sdf)))))
+     (lit (true))))
+   (true))
+  
+)

@@ -1,0 +1,87 @@
+					;   -*-mode: Lisp; -*-
+#
+#
+
+# this is Ruby code:
+# -----------------------8<--------------------
+ ; class Object
+ ;   def a(); c end
+ ;   def b(); c end
+ ;   def c(); nil; end
+ ; end
+ ; class Fixnum
+ ;   def cd
+ ;     if self==0
+ ;       a; b; a; b; a;
+ ;       a; b; a; b; a;
+ ;       a; b; a; b; a;
+ ;       a; b; a; b; a;
+ ;       0
+ ;     else
+ ;       ((self-1).cd; (self-1).cd)
+ ;     end
+ ;   end
+ ; end
+# ---------------------->8---------------------
+; (hint: `;' is not a comment in Ruby)
+
+   (snippets
+    ((body
+      ((send
+	(const (nil) Object)
+	define_method
+	((quote (a
+		 (nil)
+		 (send (self) c (nil))))))
+       (send
+	(const (nil) Object)
+	define_method
+	((quote (b
+		 (nil)
+		 (send (self) c (nil))))))
+       (send
+	(const (nil) Object)
+	define_method
+	((quote (c
+		 (nil)
+		 (lit (nil))))))
+       (send
+	(const (nil) Object)
+	define_method
+	((quote (count_down
+		 (nil)
+		 (long_if
+		  (((eql (lit 0) (self))
+		    (body
+		     ((send (self) a (nil))  (send (self) b (nil))
+		      (send (self) a (nil))  (send (self) b (nil))
+		      (send (self) a (nil))
+		      (send (self) a (nil))  (send (self) b (nil))
+		      (send (self) a (nil))  (send (self) b (nil))
+		      (send (self) a (nil))
+		      (send (self) a (nil))  (send (self) b (nil))
+		      (send (self) a (nil))  (send (self) b (nil))
+		      (send (self) a (nil))
+		      (send (self) a (nil))  (send (self) b (nil))
+		      (send (self) a (nil))  (send (self) b (nil))
+		      (send (self) a (nil))
+		      (lit 0)))))
+		  (body	;; else
+		   ((send (send (self) - ((lit 1)))
+			  count_down
+			  (nil))
+		    (send (send (self) - ((lit 1)))
+			  count_down
+			  (nil)))))))))
+    
+       (send (lit 18) count_down (nil))))
+     0)
+    )
+; the 'else' branch is called 0.26M times:
+;    4 sends in it => ~1M sends
+;    2 of them are builtin (i.e. calling C code)
+; the 'then' branch is also executed ~0.26M times:
+; 20*2*0.26M => ~10M
+; factor 2 comes from a() and b() calling c()
+; ===================
+;  10.5M sends among them 0.5M builtins

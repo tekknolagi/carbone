@@ -1,0 +1,58 @@
+-----------------
+
+for the current state:
+
+After doing "make"; look at the file "all_builtins.vmg". It contains
+VM instruction definitions for (the Fixnum) builtins.
+
+It's not necessary to generate this from some (maybe not so well
+designed) Lisp-like language (see fixnum.decl; it is original source).
+
+---------------
+
+This directory is currently used for small library
+functions. Especially for those it's important to keep the call
+overhead minimal. So they get compiled to VM instructions and are
+included into the VM. When a send to such a builtin is executed the VM
+is not left. That's less overhead then leaving the VM with a C
+function call.
+
+(( Maybe I'm wrong; if the VM gives its stack pointer to the C
+   function, it may acess the parameters, rcv and #params fast; I've
+   not yet benchmarked this one  ))
+
+---------------
+
+I will soon kill the code in this directory.
+
+I'm searching a way to specify builtins as C code, but still allowing
+to compile specialisations from them.
+
+If one inlines a send, the number of parameters does in some cases
+no longer need to be checked. So one could drop this check. This is a
+specialisation.
+
+I don't want to write C code for suchlike specialisations by hand,
+so: use a tool
+
+cmix from xxxxx  (debian package cmix)
+
+cmix does exactly this
+
+....
+....
+
+
+To have another example: The Ruby code 'a+(b+c)'
+
+If the VM happens to observe that this code is excuted very often and
+that a, b, c and b+c are all allways Fixnums then one could
+
+  - determine  the  implementation  for  the :+  message  earlier,  at
+    compile time
+
+  - save the translation from long to VALUE (the operation is executed
+    with long) and back and forth and back
+
+How could one write this in C so that cmix may understand it?
+

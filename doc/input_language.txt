@@ -1,0 +1,143 @@
+
+Input Language
+------------------
+
+The input language  - Carbone's first native language  - is Lisp-like,
+corresponding to a subset of LGram level 1.
+
+It is parsed and precompiled Ruby code.
+
+Sooner or  later - when  the Ruby parser  will work and a  compiler is
+written (in Ruby) - the Carbone input language will become an internal
+data format.  It's definition  is: "The input  for the  generator, the
+last  step in compilation."   (This is  also the  reason, why  you can
+build Carbone with `make gen'; it's derived from a generator test)
+
+Look at the tests to get an impression.
+
+   tests/t0_base.lg
+
+for the language basics; use `./gen -Stc tests/t0_base.lg | less' to
+see whats happening) 
+
+sequence:
+	(body list_of(statements))
+
+literals:
+	(lit number)   e.g. (lit 1) (lit 2)
+	(lit symbol)   e.g. (lit a) (lit *a--<->--b*)
+	(lit list)     e.g. (lit (+ (* 1 2) (* 3 4)))
+	synonym:
+	(quote ...)
+
+constants:
+	(const nil const-name)  e.g. (const nil Object)
+	                             (const nilFixnum)
+	Currently only outer constants are supported.
+	
+
+reference comparison:
+	(eql a b)   compare the references a and b
+
+simple conditions:
+	(scond (true) a b)    means 'a && b'
+	(scond (false) a b)   means 'a || b'
+
+while loop:
+	(while condition instruction)
+
+calling C functions generically:
+	(cfunc c-function-name param1 param2 ...)
+
+	will call a C function that has to be compiled into the VM and
+	declared with something like: 
+	    `cfunc_declare("meth_generate", meth_generate, 1, 2);'
+	parameters to cfunc_declare():
+	     * method name as string 
+	     * the C function itself
+	     * 0 for returns-void; 1 for returns-something(e.g. some-VALUE) 
+	     * number of parameters
+
+send:
+	(send receiver selector (list of arguments) rest-array proc)
+
+	for example, the Ruby code `1+2' would translate to:
+	  (send
+	   (lit 1)        ;; rcv
+	   +              ;; sel
+	   ((lit 2)))     ;; args
+
+	rest_args and proc are prevu, but not yet fully implemented.
+
+
+invoke:
+	(invoke rcv callable)
+	evaluates `rcv' and `callable';
+	calls callable with `rcv' as self;
+	callable must be a method of rcv's class or a block which was
+        compiled for it;
+
+
+and inside the context of a method or a block:
+
+self:
+	(self)
+
+local variables:
+	(lv  lvar-name)  get a local-variable
+	(lv= lvar-name)  set a local-variable
+
+parameters:
+	(par  parameter-name)
+
+instance variables:
+	(iv ivar-name)
+	(iv= ivar-name new-value)
+
+method existance:
+	(boundp class selector)
+
+block/proc creation:
+	(block (compilation-hints) code)
+
+At the end, the code is the documentation: see comp/generator.c
+
+Currently everything has to be packaged inside
+`(snippets list_of(code expected-result))'
+(Excluded the code given at the commandline with the -e option.)
+
+
+
+Available Methods
+-----------------
+
+define_class
+------------
+
+
+define_method
+-------------
+
+(send                      ; see main.c#load_builtins()
+  target-class
+  define_method
+  ((lit
+    (method-name
+     (parameter-list rest-parameter)
+     (stack-variables)    ; svars
+     (local-variables)    ; lvars
+     (proc)
+     (method-code)))))
+
+
+In the directory carbone/builtins/ you can see that I'm trying to
+_declare_ builtin methods and not to hardcode them in C.
+builtins/trans.rb is doing the translation to C code and they get
+appended to the set of VM primitives in carbone/vm/Makefile.
+
+See the README in this directory.
+
+explain compilation-flags
+
+
+

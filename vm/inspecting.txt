@@ -1,0 +1,11 @@
+
+in engine.o:
+
+gcc-3.0 -O3 -fomit-frame-pointer ...
+
+ip		esi
+sp		edi
+spTOS		0x88(%esp,1)
+
+free:
+eax, ecx

@@ -1,0 +1,15 @@
+
+FEATURES:
+  * direct threaded code
+  * vmgen (top of stack caching, profiling, disassembling, superinstructions)
+  * fast generic calling of C functions
+  * configurable class-method cache
+  * non-optimizing VM has small size
+  * high level intermediary language (LGram)
+  * continous instance memory layout
+
+FUTURE FEATURES:
+  * compiler written in Ruby
+    (except last step in compilation: generation of instructions)
+  * dynamic recompilation
+

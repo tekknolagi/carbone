@@ -1,0 +1,143 @@
+<h3>compile global variables</h3>
+Allocate memory for the reference (in a stack that never shrinks) that
+will represent the gvar; exchange the gvar access by a access to that 
+memory location; save name of gvar and memory ref. for further uses.
+Access to the Object that the gvar contains is doubly indirected.
+
+
+<h3>compile getting values from constants</h3>
+If the constant does not yet exist, then replace it by a call to a
+runtime function that looks up the value of this constant, invalidates
+the current code block, and schedule it recompilation.
+
+
+If the constant exists: replace it by its value. Add to the global
+dependencies list, that the produced code object has to be
+invalidated, if this constant will ever be changed. 
+
+
+<h3>compile assignments to constants</h3>
+Replace it by a call to a runtime function, that will create the
+constant in it's corresponding context and set the value, or, if it
+already existed, set the new value, give a warning, and invalidate all
+Code objects, that depend on the value of the constant.
+
+Note: This is only necessary if the reference that the constant
+points to is changed (by a assignment); it is not necessary, if a
+message is sent to the object the constant points to; not depending
+whether the message changes the content of the object or not.
+
+
+
+
+
+<h3>compile instance variables (ivars)</h3>
+
+<i> 
+Goal: Have a continuous block of memory for all ivars of one
+instance. This should be valid for all kinds (e.g. classes) of
+objects, not depending on the number of mixins, and not forcing its
+super classes or mixins to be unchangeable, nor forbidding mixing in
+further modules.
+
+<br>
+(There are serious problems when compiling mixed in modules with the
+process described in the following 'Solution'; see explanation
+below. The problem is big enough that maybe the goal (continous block
+of memory for all ivars of one instance) can't be maintained and then
+this whole block about compiling ivars will change a lot.) 
+<br></i>
+
+Rationale: ivar accessors will be pretty fast without having to wind
+up class hierarchies, but being able to use a constant offset to the
+start address of the instance.
+
+Note: Recompiling methods each time an ivar is added to a class, super
+class, or mixin will be necessary.
+
+Solution: Add a field `int version' to each Class object. Increment
+this field each time a change is made to the memory layout of it's
+instances (one of those events listed above).
+Then, each reference to a Class is pointing to a Class of a specific 
+version, and so does each object. The memory layout of its ivars is
+only valid, in the context of such a versioned Class.
+
+Process of adding an ivar:
+If a ivar with a given name is not valid for the context of the
+current class and also no super class, or mixin knows of its name:
+* dup the current class
+* increment the version
+* Add it to the list of known ivars in the current class.
+* invalidate all Code objects, that registered dependency on the
+  memory layout of instances of this class. (This list of depending
+  code objects may be kept in the Class object, since it's class local) 
+* put a reference to class_next_version into the old version of the
+  same class, to facilitate migration of instances to the newest
+  version. 
+* write a reference to the new version of that class into the Constant
+  that represents this class. 
+
+Migrating instances to newest version of their class:
+Two possibilities, but both not really thought through:
+(a) keep list of all instances for each class; migrate to the new 
+    version of a class immediatly after the class is changed. (Aren't
+    those lists expensive to keep up-to-date? Aren't they already
+    necessary to implement ObjectSpace? Wouldn't they be an exception
+    for the garbage collector?)
+    But then one could update all affected instances instantly.
+(b) migrate a instance to the newest version, when a method is
+    invoked; to implement this, a check about the version of the class
+    the instance points to has to be performed.
+
+(Think of a ivar, that is at first used in a subclass, but later in a
+superclass ==> move it to superclass; delete it in subclass; 
+
+Note: Modules are classes that don't allow a super class, so they are
+      treated like classes here.
+
+Note: When sending :new to a Class it has to check if this version of
+the Class is the latest version, and hand the request over to the
+newer version. -- References to Classes can exist anywhere (suppose in
+a arbitrary variable); in the process of changing the implementation
+of a Class, one can change the primary reference (the Constant in the
+proper Namespace with the name of the class), but it is not possible
+to upgrade other references.
+
+
+Arbitrary super-sub hirarchies of classes won't be a problem, since
+each class is a direct subclass of one direct superclass; but mixed in
+modules:
+* modules can arbitrarily use ivars (so they have to be regared here)
+* modules can be mixed in to multiple arbitrary classes.
+  One memory-block per instance should contain all its ivars. So each
+  ivar in a class corresponds to a offset to this memory-block. With a
+  good ordering (ivars of superclasses first) the offset does not
+  depend on the subclasses, but only from the superclasses (which are
+  static). So, instances of subclasses can be passed to methods of
+  superclasses, and those can work with the same offset for the same
+  ivar, exactly like working on a instance of the superclass.
+
+What's the problem when compiling ivars this way?
+
+The problem is that instance methods from modules can't be compiled to
+static offsets in the context of the module. The modules ivars can be
+mapped to a static offset after having been mixed-in to a class, but
+not before.
+
+Each time a module gets mixed-in to a class, one has to save the
+offset of its ivar offsets.
+
+
+
+
+<h3>eval</h3>
+For compiling to a relatively static memory layout (static in the
+sense: between code updates), `eval' can be a quite flexible enemy:
+
+Probably there has to be some kind of overflow area for
+'unallocated' variables.
+When a `eval' wants to introduce a new ivar or lvar the VM can't
+simply stop execution and schedule the enclosing method for
+recompilation...
+
+

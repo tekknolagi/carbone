@@ -1,0 +1,61 @@
+;   -*-mode: Lisp; -*-
+#
+#
+(snippets
+
+ ;; class AClass
+ ;;   def initialize(a)
+ ;;     @a = a;
+ ;;   end
+ ;;   def d
+ ;;     if @a > 1
+ ;;       n1 = @a / 2
+ ;;       n2 = @a - n1
+ ;;       AClass.new(n1).d + AClass.new(n2).d
+ ;;     else
+ ;;       @a
+ ;;     end
+ ;;   end
+ ;; end
+ ((body
+   ((send
+     (const (nil) Class)
+     define_class
+     ((lit AClass)
+      (const (nil) Object)      # superclass
+      (quote
+       (((ivar @a))             # ivars (or list of new ivars)
+	(body
+	 ((send (self) define_method
+		((quote (initialize
+			 ((param a))
+			 (body
+			  ((iv= @a (par a))))))))
+
+	  (send (self) define_method
+		((quote (d
+			 ((lvar n1 n2))
+			 (body
+			  ((long_if
+			    (((send (iv @a) > ((lit 1)))
+			      (body
+			       ((lv= n1 (send (iv @a) / ((lit 2))))
+				(lv= n2 (send (iv @a) - ((lv n1))))
+				(send 
+				 (send (send (const (nil) AClass)
+					     new
+					     ((lv n1)))
+				       d
+				       (nil))
+				 +
+				 ((send (send (const (nil) AClass)
+					      new
+					      ((lv n2)))
+					d
+					(nil))))))))
+			    (lit 3))))))))))))))
+
+    (send (send (const (nil) AClass) new ((lit 1000000))) d (nil))))
+
+  3000000)
+)

@@ -1,0 +1,36 @@
+;   -*-mode: Lisp; -*-
+#
+# testing ivars identity
+#
+(snippets
+
+ ((body
+   ((send (const (nil) Class)
+	  define_class
+	  ((lit AClass)
+	   (const (nil) Object)        # superclass
+	   (quote (((ivar @a @b @c))    # ivars (or list of new ivars)
+		   (body
+		    ((send (self) define_method
+			   ((quote (initialize
+				    ((param a b c))
+				    (body
+				     ((iv= @a (par a))
+				      (iv= @b (par b))
+				      (iv= @c (par c))))))))
+		     
+		     (send (self) define_method
+			   ((quote (operate
+				    (nil)
+				    (send (send (iv @a) + 
+						((iv @b)))
+					  *
+					  ((iv @c)))))))))))))
+   
+    (const= (nil) AClassInstance2
+	    (send (const (nil) AClass) new ((lit 3) (lit 4) (lit 5))))
+    (send (const (nil) AClassInstance2)
+	  operate
+	  (nil))))
+  35)
+ )

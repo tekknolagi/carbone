@@ -1,0 +1,43 @@
+#   -*-mode: Lisp; -*-
+
+(snippets
+ ((body ((while (lit (false)) (lit 2999))))
+  (false))
+
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit (method_with_while
+	    ((lvar var1))
+	    (body
+	     ((lv= var1 (self))
+	      (while (send (lv var1) > ((lit 0)))
+		(body
+		 ((cfunc tree_dump (lit (a (b (c) d) e)))
+		  (lv= var1 (send (lv var1) - ((lit 1)))))))))))))
+    (lit 1)))
+  1)
+
+ ((send (lit 3) method_with_while (nil))
+  0)
+
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit (while_bench
+	    ((lvar cnt))
+	    (body
+	     ((lv= cnt (self))
+	      (while (send (lv cnt) > ((lit 0)))
+		(body
+		 ((lv= cnt (send (lv cnt) - ((lit 1)))))))))))))
+    (lit 1)))
+  1)
+
+ ((send (lit 3000000) while_bench (nil))
+  0)
+
+
+)

@@ -1,0 +1,78 @@
+#   -*- mode: Lisp; -*-
+
+(snippets
+ ((send
+   (lit 1)         ;; rcv
+   +               ;; sel
+   ((lit 1))       ;; args
+;;  (nil)          ;; rest_args
+;;  (nil)          ;; proc
+   )
+  2)
+
+
+ ((send
+   (send (lit 5) * ((lit 20)))
+   +
+   ((send (lit 2) * ((lit 3)))))
+  106)
+
+ ;; def tstmthd(a)
+ ;;   if a == 1 then self
+ ;;   else self.tstmthd(a-1)*self end
+ ;; end
+ ((body
+   ((send (const (nil) Fixnum) define_method
+	  ((lit (** ((param a))
+		    (long_if (((eql (par a) (lit 1))
+			       (self)))
+			     (send
+			      (send (self)
+				    **
+				    ((send (par a) - ((lit 1)))))
+			      *
+			      ((self))))))))
+    (lit (nil))))
+  (nil))
+
+ ((send (lit 7)
+	**
+	((lit 3)))
+  343)  ; == 7*7*7
+
+ ((send (lit 2)
+	**
+	((lit 15)))
+  32768)
+
+
+; class Fixnum
+;   def fac()
+;     if self == 1 then 1
+;     else self * (self-1).fac
+;   end
+; end
+
+ ((body
+   ((send
+     (const (nil) Fixnum)
+     define_method
+     ((lit (fac (nil)
+		(long_if (((eql (self) (lit 1))
+			   (lit 1)))
+			 (send (self)
+			       *
+			       ((send
+				 (send (self) - ((lit 1)))
+				 fac
+				 (nil)))))))))
+    (lit (nil))))
+  (nil))
+
+ ((send
+   (lit 5)
+   fac
+   (nil))
+  120)
+
+ )
